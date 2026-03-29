@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mercedes-Benz | Gestão de Veículos</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<div class="loading-bar" id="loadingBar"></div>
+<div id="toast"></div>
+
+<!-- ===================== TELA 1: LISTAGEM ===================== -->
+<div class="screen active" id="screen-home">
+
+  <header class="site-header">
+    <svg class="mb-star" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="48" stroke="#b0b0b0" stroke-width="2.5"/>
+      <circle cx="50" cy="50" r="42" stroke="#b0b0b0" stroke-width="1"/>
+      <path d="M50 8 L54 44 L88 54 L54 58 L50 92 L46 58 L12 54 L46 44 Z" fill="#b0b0b0"/>
+      <path d="M50 18 L52.5 44 L78 52 L52.5 56 L50 82 L47.5 56 L22 52 L47.5 44 Z" fill="#2a2a2a"/>
+      <path d="M50 8 L53 46 L88 54 L53 58 L50 92" stroke="#b0b0b0" stroke-width="1.5" fill="none"/>
+      <path d="M50 8 L47 46 L12 54 L47 58 L50 92" stroke="#b0b0b0" stroke-width="1.5" fill="none"/>
+      <circle cx="50" cy="50" r="6" fill="#b0b0b0"/>
+    </svg>
+    <div class="header-text">
+      <h1>Mercedes-Benz</h1>
+      <span>Caminhões &amp; Ônibus</span>
+    </div>
+    <div class="header-divider"></div>
+    <span class="header-subtitle">Gestão de Veículos</span>
+  </header>
+
+  <!-- BUSCA — sempre visível -->
+  <div class="search-area">
+    <div class="search-row">
+      <input type="text" id="inp-search"
+        placeholder="QVV, Variante X, PN, BM, QW…" />
+      <button onclick="handleSubmit()">Buscar</button>
+    </div>
+    <div class="search-notice" id="searchNotice"></div>
+
+    <!-- Wheel de planta dentro da search-area -->
+    <div class="wheel-section">
+      <div class="wheel-label"><span class="req">*</span> Selecionar Planta</div>
+      <div class="wheel-row">
+        <button class="wheel-arrow" id="wheel-up" aria-label="Anterior">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+               stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <div class="wheel-track" id="wheelTrack">
+          <div class="wheel-highlight"></div>
+          <div class="wheel-fade-t"></div>
+          <div class="wheel-fade-b"></div>
+          <div class="wheel-list" id="wheelList"></div>
+        </div>
+        <button class="wheel-arrow" id="wheel-down" aria-label="Próximo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+               stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
+      <div class="wheel-caption">Planta selecionada: <strong id="wheelLabel">SBC</strong></div>
+    </div>
+  </div>
+
+  <!-- ABAS: QVV · X · BM · QW · Outros -->
+  <div class="tabs-bar" id="tabsBar">
+    <button class="tab-btn active" data-tab="qvv" onclick="switchTab('qvv')">QVV</button>
+    <button class="tab-btn"        data-tab="x"   onclick="switchTab('x')">X</button>
+    <button class="tab-btn"        data-tab="bm"  onclick="switchTab('bm')">BM</button>
+    <button class="tab-btn"        data-tab="qw"  onclick="switchTab('qw')">QW</button>
+    <button class="tab-btn"        data-tab="outros" onclick="switchTab('outros')">Outros</button>
+  </div>
+
+  <div class="content-wrap">
+    <div id="panel-qvv"    class="tab-panel active"></div>
+    <div id="panel-x"      class="tab-panel"></div>
+    <div id="panel-bm"     class="tab-panel"></div>
+    <div id="panel-qw"     class="tab-panel"></div>
+    <div id="panel-outros" class="tab-panel"></div>
+  </div>
+
+  <footer class="site-footer">© 2026 Mercedes-Benz do Brasil — Todos os direitos reservados</footer>
+</div>
+
+<!-- ===================== TELA 2: DETALHE ===================== -->
+<div class="screen" id="screen-detail">
+
+  <header class="site-header">
+    <svg class="mb-star" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="48" stroke="#b0b0b0" stroke-width="2.5"/>
+      <circle cx="50" cy="50" r="42" stroke="#b0b0b0" stroke-width="1"/>
+      <path d="M50 8 L54 44 L88 54 L54 58 L50 92 L46 58 L12 54 L46 44 Z" fill="#b0b0b0"/>
+      <path d="M50 18 L52.5 44 L78 52 L52.5 56 L50 82 L47.5 56 L22 52 L47.5 44 Z" fill="#2a2a2a"/>
+      <path d="M50 8 L53 46 L88 54 L53 58 L50 92" stroke="#b0b0b0" stroke-width="1.5" fill="none"/>
+      <path d="M50 8 L47 46 L12 54 L47 58 L50 92" stroke="#b0b0b0" stroke-width="1.5" fill="none"/>
+      <circle cx="50" cy="50" r="6" fill="#b0b0b0"/>
+    </svg>
+    <div class="header-text">
+      <h1>Mercedes-Benz</h1>
+      <span>Caminhões &amp; Ônibus</span>
+    </div>
+    <div class="header-divider"></div>
+    <span class="header-subtitle">Detalhe</span>
+    <button class="btn-back" onclick="goBack()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+           stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      Voltar
+    </button>
+  </header>
+
+  <div class="detail-hero">
+    <div class="detail-hero-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+      </svg>
+    </div>
+    <div class="detail-hero-info">
+      <h2 id="detail-title">—</h2>
+      <p  id="detail-sub">—</p>
+    </div>
+  </div>
+
+  <div class="content-wrap">
+    <div id="detail-body"></div>
+  </div>
+  <footer class="site-footer">© 2026 Mercedes-Benz do Brasil — Todos os direitos reservados</footer>
+</div>
+
+<script>
+// =====================================================================
+// DATABASE
+// Nota: QWs são associadas ao QVV, não às variantes X.
+// =====================================================================
+const DB = {
+  qvv: {
+    'QVV31330757T': {
+      type: 'QVV', name: 'QVV31330757T', plant: 'SBC',
+      description: 'Veículo de referência',
+      variants: ['X22180062','X002053904','X014452156','QVAM12341245','QVAA12451525'],
+      qws: ['CUQW5232'],
+      validFrom: '2020-01-15', validUntil: '2033-09-23', classification: 'U0'
+    }
+  },
+  variants: {
+    'X22180062': {
+      type: 'Variante', name: 'X22180062', description: 'Motor',
+      partNumbers: ['A9608260359','N23125168295489'], qws: [],
+      validFrom: '2020-06-01', validUntil: '2033-09-23', classification: 'U0'
+    },
+    'X002053904': {
+      type: 'Variante', name: 'X002053904', description: 'Câmbio',
+      partNumbers: ['Z5612959'], qws: [],
+      validFrom: '2021-08-10', validUntil: '2033-09-23', classification: 'U0'
+    },
+    'X014452156': {
+      type: 'Variante', name: 'X014452156', description: 'Cabina',
+      partNumbers: ['A9608260359'], qws: [],
+      validFrom: '2020-02-20', validUntil: '2033-09-23', classification: 'U0'
+    },
+    'QVAM12341245': {
+      type: 'Variante', name: 'QVAM12341245', description: 'Motor',
+      partNumbers: ['N23125168295489','A9608260359'], qws: [],
+      validFrom: '2021-11-05', validUntil: '2033-09-23', classification: 'U7'
+    },
+    'QVAA12451525': {
+      type: 'Variante', name: 'QVAA12451525', description: 'Cabina',
+      partNumbers: ['Z5612959'], qws: [],
+      validFrom: '2020-03-12', validUntil: '2033-09-23', classification: 'U7'
+    }
+  },
+  partNumbers: {
+    'A9608260359': {
+      type: 'Part Number', name: 'A9608260359',
+      usedBy: ['X22180062','QVAM12341245','X014452156'],
+      description: 'Componente de motor/cabina',
+      validFrom: '2020-05-01', validUntil: '2033-09-23', classification: 'U7'
+    },
+    'N23125168295489': {
+      type: 'Part Number', name: 'N23125168295489',
+      usedBy: ['X22180062','QVAM12341245'],
+      description: 'Componente de motor',
+      validFrom: '2020-07-15', validUntil: '2033-09-23', classification: 'XU7'
+    },
+    'Z5612959': {
+      type: 'Part Number', name: 'Z5612959',
+      usedBy: ['X002053904','QVAA12451525'],
+      description: 'Componente de câmbio/cabina',
+      validFrom: '2020-01-01', validUntil: '2033-09-23', classification: 'YU7'
+    }
+  },
+  bm: {
+    'C 453.245': {
+      type: 'BM', name: 'C 453.245',
+      usedBy: ['X22180062','X002053904','X014452156'],
+      description: 'Identificador BM',
+      validFrom: '2020-04-10', validUntil: '2033-09-23', classification: 'U7'
+    },
+    'D 523.245': {
+      type: 'BM', name: 'D 523.245',
+      usedBy: ['QVAM12341245','QVAA12451525'],
+      description: 'Identificador BM',
+      validFrom: '2020-09-20', validUntil: '2033-09-23', classification: 'U7'
+    }
+  },
+  qws: {
+    'CUQW5232': {
+      type: 'QW', name: 'CUQW5232',
+      appliedTo: ['QVV31330757T'],   // aplicada no QVV
+      modifications: [
+        { part: 'A9608260359',    sign: '+' },
+        { part: 'N23125168295489', sign: '-' }
+      ],
+      validFrom: '2020-12-01', validUntil: '2033-09-23', classification: 'U7'
+    }
+  }
+};
+
+// =====================================================================
+// HISTORY — cada entrada guarda o resultado renderizado completo
+// =====================================================================
+const history = [];   // [ { result, category, planta } ]
+
+function pushHistory(result, category, planta) {
+  history.push({ result, category, planta });
+}
+
+function goBack() {
+  if (history.length > 0) {
+    const prev = history.pop();
+    renderDetail(prev.result, prev.category, prev.planta, false); // false = não empurra no histórico
+  } else {
+    navigateTo('screen-home');
+  }
+}
+
+// =====================================================================
+// WHEEL
+// =====================================================================
+const PLANTS  = ['SBC', 'CPS', 'ITU'];
+const ITEM_H  = 48;  // must match --item-h in CSS
+const PADDING = 1;   // 1 row above and below the visible selection
+
+let plantIndex = 0;
+let wDragging = false, wStartY = 0, wStartIdx = 0;
+
+const wList   = document.getElementById('wheelList');
+const wTrack  = document.getElementById('wheelTrack');
+const wLabel  = document.getElementById('wheelLabel');
+
+function buildWheel() {
+  wList.innerHTML = '';
+  // 1 padding row on top
+  const top = document.createElement('div');
+  top.className = 'wheel-item';
+  wList.appendChild(top);
+  // real items
+  PLANTS.forEach((p, i) => {
+    const d = document.createElement('div');
+    d.className = 'wheel-item' + (i === plantIndex ? ' active' : '');
+    d.textContent = p;
+    d.dataset.idx = i;
+    wList.appendChild(d);
+  });
+  // 1 padding row on bottom
+  const bot = document.createElement('div');
+  bot.className = 'wheel-item';
+  wList.appendChild(bot);
+
+  applyWheelOffset(plantIndex, true);
+}
+
+function applyWheelOffset(idx, instant) {
+  // offset so the selected item sits in the middle row (row index 1)
+  const y = -(idx * ITEM_H);   // each increment shifts list up by ITEM_H
+  wList.style.transition = instant ? 'none' : 'transform 0.28s cubic-bezier(0.4,0,0.2,1)';
+  wList.style.transform  = `translateY(${y}px)`;
+  updateWheelSelected();
+}
+
+function updateWheelSelected() {
+  wList.querySelectorAll('.wheel-item').forEach(el => {
+    const i = parseInt(el.dataset.idx);
+    el.classList.toggle('active', !isNaN(i) && i === plantIndex);
+  });
+  wLabel.textContent = PLANTS[plantIndex];
+}
+
+function nudgeWheel(dir) {
+  plantIndex = (plantIndex + dir + PLANTS.length) % PLANTS.length;
+  applyWheelOffset(plantIndex, false);
+}
+
+document.getElementById('wheel-up').addEventListener('click',   () => nudgeWheel(-1));
+document.getElementById('wheel-down').addEventListener('click', () => nudgeWheel(1));
+
+wTrack.addEventListener('mousedown', e => {
+  wDragging = true; wStartY = e.clientY; wStartIdx = plantIndex;
+  wList.style.transition = 'none';
+});
+window.addEventListener('mousemove', e => {
+  if (!wDragging) return;
+  const moved = Math.round(-(e.clientY - wStartY) / ITEM_H);
+  const ni = Math.max(0, Math.min(PLANTS.length - 1, wStartIdx + moved));
+  if (ni !== plantIndex) { plantIndex = ni; applyWheelOffset(plantIndex, true); }
+});
+window.addEventListener('mouseup', () => {
+  if (!wDragging) return; wDragging = false; applyWheelOffset(plantIndex, false);
+});
+wTrack.addEventListener('touchstart', e => {
+  wStartY = e.touches[0].clientY; wStartIdx = plantIndex;
+}, { passive: true });
+wTrack.addEventListener('touchmove', e => {
+  const moved = Math.round(-(e.touches[0].clientY - wStartY) / ITEM_H);
+  const ni = Math.max(0, Math.min(PLANTS.length - 1, wStartIdx + moved));
+  if (ni !== plantIndex) { plantIndex = ni; applyWheelOffset(plantIndex, true); }
+}, { passive: true });
+wTrack.addEventListener('touchend', () => applyWheelOffset(plantIndex, false));
+wTrack.addEventListener('wheel', e => {
+  e.preventDefault(); nudgeWheel(e.deltaY > 0 ? 1 : -1);
+}, { passive: false });
+
+buildWheel();
+
+// =====================================================================
+// NAVIGATION
+// =====================================================================
+function navigateTo(screenId) {
+  const bar = document.getElementById('loadingBar');
+  bar.classList.add('active');
+  setTimeout(() => {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active','exit-left'));
+    document.getElementById(screenId).classList.add('active');
+    document.getElementById(screenId).scrollTop = 0;
+    bar.classList.remove('active');
+  }, 300);
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// =====================================================================
+// TABS
+// =====================================================================
+function switchTab(id) {
+  document.querySelectorAll('#tabsBar .tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === id));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  const panel = document.getElementById('panel-' + id);
+  if (panel) panel.classList.add('active');
+}
+
+function arrowSVG() {
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>`;
+}
+
+function makeItemCard(key, name, sub) {
+  return `
+    <div class="item-card" onclick="openItem('${key}')">
+      <div>
+        <div class="item-card-name">${name}</div>
+        <div class="item-card-sub">${sub}</div>
+      </div>
+      <div class="item-card-arrow">${arrowSVG()}</div>
+    </div>`;
+}
+
+function renderTabs() {
+  // QVV
+  document.getElementById('panel-qvv').innerHTML =
+    '<div class="item-list">' +
+    Object.values(DB.qvv).map(q => makeItemCard(q.name, q.name, q.description)).join('') +
+    '</div>';
+
+  // X — only variants starting with X
+  const xItems = Object.values(DB.variants).filter(v => v.name.startsWith('X'));
+  document.getElementById('panel-x').innerHTML = xItems.length
+    ? '<div class="item-list">' + xItems.map(v => makeItemCard(v.name, v.name, v.description)).join('') + '</div>'
+    : '<div class="empty-state">Nenhuma variante X encontrada.</div>';
+
+  // BM
+  document.getElementById('panel-bm').innerHTML =
+    '<div class="item-list">' +
+    Object.values(DB.bm).map(b => makeItemCard(b.name, b.name, b.description)).join('') +
+    '</div>';
+
+  // QW
+  document.getElementById('panel-qw').innerHTML =
+    '<div class="item-list">' +
+    Object.values(DB.qws).map(q => makeItemCard(q.name, q.name, 'Modificação')).join('') +
+    '</div>';
+
+  // Outros — non-X variants + all part numbers, grouped
+  const otherVars = Object.values(DB.variants).filter(v => !v.name.startsWith('X'));
+  const allPNs    = Object.values(DB.partNumbers);
+  let html = '';
+  if (otherVars.length) {
+    html += '<div style="font-size:0.62rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--mb-silver);margin-bottom:10px">Variantes</div>';
+    html += '<div class="item-list">' + otherVars.map(v => makeItemCard(v.name, v.name, v.description)).join('') + '</div>';
+    html += '<div class="section-divider"></div>';
+  }
+  if (allPNs.length) {
+    html += '<div style="font-size:0.62rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--mb-silver);margin-bottom:10px">Part Numbers</div>';
+    html += '<div class="item-list">' + allPNs.map(p => makeItemCard(p.name, p.name, p.description)).join('') + '</div>';
+  }
+  document.getElementById('panel-outros').innerHTML = html || '<div class="empty-state">Sem itens.</div>';
+}
+
+// =====================================================================
+// SEARCH
+// =====================================================================
+function handleSubmit() {
+  const raw    = document.getElementById('inp-search').value.trim();
+  const notice = document.getElementById('searchNotice');
+  if (!raw) { notice.textContent = '⚠ Digite um termo de busca.'; return; }
+  notice.textContent = '';
+  openItem(raw.toUpperCase());
+}
+
+document.getElementById('inp-search').addEventListener('keydown', e => {
+  if (e.key === 'Enter') handleSubmit();
+});
+
+function openItem(key) {
+  const planta = PLANTS[plantIndex];
+  let result = null, category = null;
+
+  if (DB.qvv[key])          { result = DB.qvv[key];          category = 'qvv'; }
+  else if (DB.variants[key]){ result = DB.variants[key];      category = 'variant'; }
+  else if (DB.partNumbers[key]){ result = DB.partNumbers[key]; category = 'pn'; }
+  else if (DB.bm[key])      { result = DB.bm[key];            category = 'bm'; }
+  else if (DB.qws[key])     { result = DB.qws[key];           category = 'qw'; }
+
+  if (!result) { toast('Termo não encontrado na base de dados.'); return; }
+
+  if (category === 'qvv' && planta !== 'SBC') {
+    toast('QVV disponível apenas na planta SBC. Selecione SBC.');
+    return;
+  }
+
+  // if already on detail screen, push current view to history
+  if (document.getElementById('screen-detail').classList.contains('active')) {
+    pushHistory(currentResult, currentCategory, currentPlanta);
+  }
+
+  renderDetail(result, category, planta, true);
+}
+
+// =====================================================================
+// RENDER DETAIL
+// =====================================================================
+let currentResult = null, currentCategory = null, currentPlanta = null;
+
+function fmtDate(s) {
+  if (!s) return '—';
+  const [y,m,d] = s.split('-');
+  return `${d}.${m}.${y}`;
+}
+
+function badge(cls) {
+  return `<span class="badge badge-${cls.toLowerCase()}">${cls}</span>`;
+}
+
+function renderDetail(result, category, planta, pushToHistory) {
+  if (pushToHistory && currentResult) {
+    pushHistory(currentResult, currentCategory, currentPlanta);
+  }
+  currentResult   = result;
+  currentCategory = category;
+  currentPlanta   = planta;
+
+  document.getElementById('detail-title').textContent = result.name;
+  document.getElementById('detail-sub').textContent   = `${result.type} · Planta: ${planta}`;
+
+  const body = document.getElementById('detail-body');
+  body.innerHTML = '';
+
+  // ---- General info card ----
+  const genCard = el('div', 'card');
+  genCard.innerHTML = `
+    <div class="card-title">Informações Gerais ${badge(result.classification)}</div>
+    <div class="detail-grid">
+      <div class="detail-field full">
+        <div class="detail-field-label">${result.type}</div>
+        <div class="detail-field-value">${result.name}</div>
+      </div>
+      ${result.description ? `
+      <div class="detail-field full">
+        <div class="detail-field-label">Descrição</div>
+        <div class="detail-field-value">${result.description}</div>
+      </div>` : ''}
+      <div class="detail-field">
+        <div class="detail-field-label">Válido Desde</div>
+        <div class="detail-field-value">${fmtDate(result.validFrom)}</div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-field-label">Válido Até</div>
+        <div class="detail-field-value">${fmtDate(result.validUntil)}</div>
+      </div>
+    </div>`;
+  body.appendChild(genCard);
+
+  // ---- QVV: variants list + QWs ----
+  if (category === 'qvv') {
+    if (result.variants && result.variants.length) {
+      body.appendChild(divider());
+      body.appendChild(variantListCard('Variantes Associadas', result.variants));
+    }
+    if (result.qws && result.qws.length) {
+      body.appendChild(divider());
+      body.appendChild(qwCard(result.qws));
+    }
+  }
+
+  // ---- Variant: part numbers + QWs (from the QVVs that use this variant) ----
+  if (category === 'variant') {
+    if (result.partNumbers && result.partNumbers.length) {
+      body.appendChild(divider());
+      body.appendChild(pnListCard(result.partNumbers));
+    }
+    // QWs that belong to QVVs containing this variant
+    const relatedQWs = getQWsForVariant(result.name);
+    if (relatedQWs.length) {
+      body.appendChild(divider());
+      body.appendChild(qwCard(relatedQWs));
+    }
+  }
+
+  // ---- Part Number: variants that use it ----
+  if (category === 'pn') {
+    if (result.usedBy && result.usedBy.length) {
+      body.appendChild(divider());
+      body.appendChild(variantListCard('Variantes que Utilizam', result.usedBy));
+    }
+  }
+
+  // ---- BM: variants ----
+  if (category === 'bm') {
+    if (result.usedBy && result.usedBy.length) {
+      body.appendChild(divider());
+      body.appendChild(variantListCard('Variantes Associadas', result.usedBy));
+    }
+  }
+
+  // ---- QW: modifications + QVVs it applies to ----
+  if (category === 'qw') {
+    if (result.modifications && result.modifications.length) {
+      body.appendChild(divider());
+      const mc = el('div', 'card');
+      mc.innerHTML = `<div class="card-title">Modificações (Entrada / Saída)</div>
+        <div class="part-list">
+          ${result.modifications.map(m => `
+            <div class="part-item ${m.sign === '+' ? 'incoming' : 'outgoing'}"
+                 onclick="openItem('${m.part}')">
+              <span class="part-sign ${m.sign === '+' ? 'plus' : 'minus'}">${m.sign}</span>
+              <span>${m.part}</span>
+            </div>`).join('')}
+        </div>`;
+      body.appendChild(mc);
+    }
+    if (result.appliedTo && result.appliedTo.length) {
+      body.appendChild(divider());
+      const ac = el('div', 'card');
+      ac.innerHTML = `<div class="card-title">Aplicada nos QVVs</div>
+        <div class="item-list">
+          ${result.appliedTo.map(q => {
+            const qd = DB.qvv[q];
+            return `<div class="item-card" onclick="openItem('${q}')">
+              <div>
+                <div class="item-card-name">${q}</div>
+                <div class="item-card-sub">${qd ? qd.description : 'QVV'}</div>
+              </div>
+              <div class="item-card-arrow">${arrowSVG()}</div>
+            </div>`;
+          }).join('')}
+        </div>`;
+      body.appendChild(ac);
+    }
+  }
+
+  navigateTo('screen-detail');
+}
+
+// Returns QW names from any QVV that contains this variant
+function getQWsForVariant(variantName) {
+  const qwNames = new Set();
+  Object.values(DB.qvv).forEach(qvv => {
+    if (qvv.variants.includes(variantName) && qvv.qws) {
+      qvv.qws.forEach(q => qwNames.add(q));
+    }
+  });
+  return [...qwNames];
+}
+
+function variantListCard(title, keys) {
+  const c = el('div', 'card');
+  c.innerHTML = `<div class="card-title">${title}</div>
+    <div class="item-list">
+      ${keys.map(k => {
+        const vd = DB.variants[k];
+        return `<div class="item-card" onclick="openItem('${k}')">
+          <div>
+            <div class="item-card-name">${k}</div>
+            <div class="item-card-sub">${vd ? vd.description : 'Variante'}</div>
+          </div>
+          <div class="item-card-arrow">${arrowSVG()}</div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  return c;
+}
+
+function pnListCard(pns) {
+  const c = el('div', 'card');
+  c.innerHTML = `<div class="card-title">Part Numbers</div>
+    <div class="part-list">
+      ${pns.map(pn => {
+        const pd = DB.partNumbers[pn];
+        return `<div class="part-item" onclick="openItem('${pn}')">
+          <span style="font-weight:600">${pn}</span>
+          ${pd ? `<span style="font-size:0.78rem;color:var(--mb-silver)">— ${pd.description}</span>` : ''}
+        </div>`;
+      }).join('')}
+    </div>`;
+  return c;
+}
+
+function qwCard(qwNames) {
+  const c = el('div', 'card');
+  let html = `<div class="card-title">QWs — Modificações</div>`;
+  qwNames.forEach(name => {
+    const qw = DB.qws[name];
+    if (!qw) return;
+    html += `
+      <div style="margin-bottom:18px">
+        <div style="font-size:0.82rem;font-weight:700;color:var(--mb-silver);
+                    letter-spacing:0.1em;margin-bottom:8px">${name}</div>
+        <div class="part-list">
+          ${qw.modifications.map(m => `
+            <div class="part-item ${m.sign === '+' ? 'incoming' : 'outgoing'}"
+                 onclick="openItem('${m.part}')">
+              <span class="part-sign ${m.sign === '+' ? 'plus' : 'minus'}">${m.sign}</span>
+              <span>${m.part}</span>
+            </div>`).join('')}
+        </div>
+      </div>`;
+  });
+  c.innerHTML = html;
+  return c;
+}
+
+function el(tag, cls) {
+  const d = document.createElement(tag);
+  if (cls) d.className = cls;
+  return d;
+}
+
+function divider() {
+  return el('div', 'section-divider');
+}
+
+// =====================================================================
+// INIT
+// =====================================================================
+renderTabs();
+</script>
+</body>
+</html>
