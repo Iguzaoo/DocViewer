@@ -32,53 +32,54 @@
     <span class="header-subtitle">Gestão de Veículos</span>
   </header>
 
-  <!-- BUSCA — sempre visível -->
-  <div class="search-area">
-    <div class="search-row">
-      <input type="text" id="inp-search"
-        placeholder="QVV, Variante X, PN, BM, QW…" />
-      <button onclick="handleSubmit()">Buscar</button>
-    </div>
-    <div class="search-notice" id="searchNotice"></div>
-
-    <!-- Wheel de planta dentro da search-area -->
-    <div class="wheel-section">
-      <div class="wheel-label"><span class="req">*</span> Selecionar Planta</div>
-      <div class="wheel-row">
-        <button class="wheel-arrow" id="wheel-up" aria-label="Anterior">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-               stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-        </button>
-        <div class="wheel-track" id="wheelTrack">
-          <div class="wheel-highlight"></div>
-          <div class="wheel-fade-t"></div>
-          <div class="wheel-fade-b"></div>
-          <div class="wheel-list" id="wheelList"></div>
-        </div>
-        <button class="wheel-arrow" id="wheel-down" aria-label="Próximo">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-               stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-        </button>
-      </div>
-      <div class="wheel-caption">Planta selecionada: <strong id="wheelLabel">SBC</strong></div>
-    </div>
-  </div>
-
-  <!-- ABAS: QVV · X · BM · QW · Outros -->
+  <!-- ABAS no topo, logo abaixo do header -->
   <div class="tabs-bar" id="tabsBar">
-    <button class="tab-btn active" data-tab="qvv" onclick="switchTab('qvv')">QVV</button>
-    <button class="tab-btn"        data-tab="x"   onclick="switchTab('x')">X</button>
-    <button class="tab-btn"        data-tab="bm"  onclick="switchTab('bm')">BM</button>
-    <button class="tab-btn"        data-tab="qw"  onclick="switchTab('qw')">QW</button>
+    <button class="tab-btn active" data-tab="qvv"    onclick="switchTab('qvv')">QVV</button>
+    <button class="tab-btn"        data-tab="x"      onclick="switchTab('x')">X</button>
+    <button class="tab-btn"        data-tab="bm"     onclick="switchTab('bm')">BM</button>
+    <button class="tab-btn"        data-tab="qw"     onclick="switchTab('qw')">QW</button>
     <button class="tab-btn"        data-tab="outros" onclick="switchTab('outros')">Outros</button>
   </div>
 
   <div class="content-wrap">
+
+    <!-- BUSCA + WHEEL — sempre visível, acima dos painéis -->
+    <div class="search-area">
+      <div class="search-row">
+        <input type="text" id="inp-search" placeholder="QVV, Variante X, PN, BM, QW…" />
+        <button onclick="handleSubmit()">Buscar</button>
+      </div>
+      <div class="search-notice" id="searchNotice"></div>
+
+      <div class="wheel-section">
+        <div class="wheel-label"><span class="req">*</span> Selecionar Planta</div>
+        <div class="wheel-row">
+          <button class="wheel-arrow" id="wheel-up" aria-label="Anterior">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                 stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <div class="wheel-track" id="wheelTrack">
+            <div class="wheel-highlight"></div>
+            <div class="wheel-fade-t"></div>
+            <div class="wheel-fade-b"></div>
+            <div class="wheel-list" id="wheelList"></div>
+          </div>
+          <button class="wheel-arrow" id="wheel-down" aria-label="Próximo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                 stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
+        <div class="wheel-caption">Planta selecionada: <strong id="wheelLabel">SBC</strong></div>
+      </div>
+    </div>
+
+    <!-- PAINÉIS — vazios até pesquisar -->
     <div id="panel-qvv"    class="tab-panel active"></div>
     <div id="panel-x"      class="tab-panel"></div>
     <div id="panel-bm"     class="tab-panel"></div>
     <div id="panel-qw"     class="tab-panel"></div>
     <div id="panel-outros" class="tab-panel"></div>
+
   </div>
 
   <footer class="site-footer">© 2026 Mercedes-Benz do Brasil — Todos os direitos reservados</footer>
@@ -348,6 +349,22 @@ function toast(msg) {
 // =====================================================================
 // TABS
 // =====================================================================
+// Mapa de categoria → id da aba
+const CATEGORY_TAB = {
+  qvv:     'qvv',
+  variant: 'x',      // variantes X ficam na aba X; outras ficam em 'outros'
+  pn:      'outros',
+  bm:      'bm',
+  qw:      'qw'
+};
+
+function categoryToTab(category, result) {
+  if (category === 'variant') {
+    return result.name.startsWith('X') ? 'x' : 'outros';
+  }
+  return CATEGORY_TAB[category] || 'outros';
+}
+
 function switchTab(id) {
   document.querySelectorAll('#tabsBar .tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === id));
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
@@ -360,56 +377,30 @@ function arrowSVG() {
           stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>`;
 }
 
-function makeItemCard(key, name, sub) {
+function makeResultCard(result, category) {
+  // Card de resultado único — clicável para abrir o detalhe
+  const sub = result.description || result.type;
   return `
-    <div class="item-card" onclick="openItem('${key}')">
+    <div class="item-card" onclick="goToDetail('${result.name}')">
       <div>
-        <div class="item-card-name">${name}</div>
+        <div class="item-card-name">${result.name}</div>
         <div class="item-card-sub">${sub}</div>
       </div>
       <div class="item-card-arrow">${arrowSVG()}</div>
     </div>`;
 }
 
-function renderTabs() {
-  // QVV
-  document.getElementById('panel-qvv').innerHTML =
-    '<div class="item-list">' +
-    Object.values(DB.qvv).map(q => makeItemCard(q.name, q.name, q.description)).join('') +
-    '</div>';
+// Popula a aba correta com o resultado da busca e ativa essa aba
+function showResultInTab(result, category) {
+  const tabId  = categoryToTab(category, result);
+  const panel  = document.getElementById('panel-' + tabId);
 
-  // X — only variants starting with X
-  const xItems = Object.values(DB.variants).filter(v => v.name.startsWith('X'));
-  document.getElementById('panel-x').innerHTML = xItems.length
-    ? '<div class="item-list">' + xItems.map(v => makeItemCard(v.name, v.name, v.description)).join('') + '</div>'
-    : '<div class="empty-state">Nenhuma variante X encontrada.</div>';
+  panel.innerHTML =
+    `<div style="font-size:0.6rem;letter-spacing:0.26em;text-transform:uppercase;
+                 color:var(--mb-silver);margin-bottom:10px">Resultado da busca</div>
+     <div class="item-list">${makeResultCard(result, category)}</div>`;
 
-  // BM
-  document.getElementById('panel-bm').innerHTML =
-    '<div class="item-list">' +
-    Object.values(DB.bm).map(b => makeItemCard(b.name, b.name, b.description)).join('') +
-    '</div>';
-
-  // QW
-  document.getElementById('panel-qw').innerHTML =
-    '<div class="item-list">' +
-    Object.values(DB.qws).map(q => makeItemCard(q.name, q.name, 'Modificação')).join('') +
-    '</div>';
-
-  // Outros — non-X variants + all part numbers, grouped
-  const otherVars = Object.values(DB.variants).filter(v => !v.name.startsWith('X'));
-  const allPNs    = Object.values(DB.partNumbers);
-  let html = '';
-  if (otherVars.length) {
-    html += '<div style="font-size:0.62rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--mb-silver);margin-bottom:10px">Variantes</div>';
-    html += '<div class="item-list">' + otherVars.map(v => makeItemCard(v.name, v.name, v.description)).join('') + '</div>';
-    html += '<div class="section-divider"></div>';
-  }
-  if (allPNs.length) {
-    html += '<div style="font-size:0.62rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--mb-silver);margin-bottom:10px">Part Numbers</div>';
-    html += '<div class="item-list">' + allPNs.map(p => makeItemCard(p.name, p.name, p.description)).join('') + '</div>';
-  }
-  document.getElementById('panel-outros').innerHTML = html || '<div class="empty-state">Sem itens.</div>';
+  switchTab(tabId);
 }
 
 // =====================================================================
@@ -427,29 +418,47 @@ document.getElementById('inp-search').addEventListener('keydown', e => {
   if (e.key === 'Enter') handleSubmit();
 });
 
-function openItem(key) {
+function findItem(key) {
+  if (DB.qvv[key])         return { result: DB.qvv[key],        category: 'qvv' };
+  if (DB.variants[key])    return { result: DB.variants[key],    category: 'variant' };
+  if (DB.partNumbers[key]) return { result: DB.partNumbers[key], category: 'pn' };
+  if (DB.bm[key])          return { result: DB.bm[key],          category: 'bm' };
+  if (DB.qws[key])         return { result: DB.qws[key],         category: 'qw' };
+  return null;
+}
+
+// Chamado pelos cards das abas — abre o detalhe diretamente
+function goToDetail(key) {
+  const found = findItem(key);
+  if (!found) return;
+  const { result, category } = found;
   const planta = PLANTS[plantIndex];
-  let result = null, category = null;
+  renderDetail(result, category, planta, false);
+}
 
-  if (DB.qvv[key])          { result = DB.qvv[key];          category = 'qvv'; }
-  else if (DB.variants[key]){ result = DB.variants[key];      category = 'variant'; }
-  else if (DB.partNumbers[key]){ result = DB.partNumbers[key]; category = 'pn'; }
-  else if (DB.bm[key])      { result = DB.bm[key];            category = 'bm'; }
-  else if (DB.qws[key])     { result = DB.qws[key];           category = 'qw'; }
+// Chamado pela busca ou por links dentro do detalhe
+function openItem(key) {
+  const found = findItem(key);
+  if (!found) { toast('Termo não encontrado na base de dados.'); return; }
 
-  if (!result) { toast('Termo não encontrado na base de dados.'); return; }
+  const { result, category } = found;
+  const planta = PLANTS[plantIndex];
 
   if (category === 'qvv' && planta !== 'SBC') {
     toast('QVV disponível apenas na planta SBC. Selecione SBC.');
     return;
   }
 
-  // if already on detail screen, push current view to history
-  if (document.getElementById('screen-detail').classList.contains('active')) {
-    pushHistory(currentResult, currentCategory, currentPlanta);
-  }
+  const onDetail = document.getElementById('screen-detail').classList.contains('active');
 
-  renderDetail(result, category, planta, true);
+  if (onDetail) {
+    // Dentro do detalhe: empilha no histórico e vai para o próximo detalhe
+    pushHistory(currentResult, currentCategory, currentPlanta);
+    renderDetail(result, category, planta, false);
+  } else {
+    // Na tela inicial: mostra o resultado na aba correta (sem navegar)
+    showResultInTab(result, category);
+  }
 }
 
 // =====================================================================
@@ -668,7 +677,6 @@ function divider() {
 // =====================================================================
 // INIT
 // =====================================================================
-renderTabs();
 </script>
 </body>
 </html>
