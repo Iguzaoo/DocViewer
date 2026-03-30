@@ -106,8 +106,9 @@ html, body {
 
 /* ===== SEARCH BAR (always visible above tabs) ===== */
 .search-area {
-  width: 100%; max-width: 820px;
-  padding: 16px 24px 0; flex-shrink: 0;
+  width: 100%;
+  padding: 20px 0 0;
+  flex-shrink: 0;
 }
 .search-row { display: flex; gap: 10px; align-items: stretch; }
 .search-row input {
