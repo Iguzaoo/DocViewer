@@ -32,53 +32,66 @@
     <span class="header-subtitle">Gestão de Veículos</span>
   </header>
 
-  <!-- BUSCA — sempre visível -->
-  <div class="search-area">
-    <div class="search-row">
-      <input type="text" id="inp-search"
-        placeholder="QVV, Variante X, PN, BM, QW…" />
-      <button onclick="handleSubmit()">Buscar</button>
-    </div>
-    <div class="search-notice" id="searchNotice"></div>
-
-    <!-- Wheel de planta dentro da search-area -->
-    <div class="wheel-section">
-      <div class="wheel-label"><span class="req">*</span> Selecionar Planta</div>
-      <div class="wheel-row">
-        <button class="wheel-arrow" id="wheel-up" aria-label="Anterior">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-               stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-        </button>
-        <div class="wheel-track" id="wheelTrack">
-          <div class="wheel-highlight"></div>
-          <div class="wheel-fade-t"></div>
-          <div class="wheel-fade-b"></div>
-          <div class="wheel-list" id="wheelList"></div>
-        </div>
-        <button class="wheel-arrow" id="wheel-down" aria-label="Próximo">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-               stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-        </button>
-      </div>
-      <div class="wheel-caption">Planta selecionada: <strong id="wheelLabel">SBC</strong></div>
-    </div>
-  </div>
-
-  <!-- ABAS: QVV · X · BM · QW · Outros -->
+  <!-- ABAS no topo, logo abaixo do header -->
   <div class="tabs-bar" id="tabsBar">
-    <button class="tab-btn active" data-tab="qvv" onclick="switchTab('qvv')">QVV</button>
-    <button class="tab-btn"        data-tab="x"   onclick="switchTab('x')">X</button>
-    <button class="tab-btn"        data-tab="bm"  onclick="switchTab('bm')">BM</button>
-    <button class="tab-btn"        data-tab="qw"  onclick="switchTab('qw')">QW</button>
+    <button class="tab-btn active" data-tab="qvv"    onclick="switchTab('qvv')">QVV</button>
+    <button class="tab-btn"        data-tab="x"      onclick="switchTab('x')">X</button>
+    <button class="tab-btn"        data-tab="bm"     onclick="switchTab('bm')">BM</button>
+    <button class="tab-btn"        data-tab="qw"     onclick="switchTab('qw')">QW</button>
     <button class="tab-btn"        data-tab="outros" onclick="switchTab('outros')">Outros</button>
   </div>
 
   <div class="content-wrap">
+
+    <!-- BUSCA + WHEEL — sempre visível, acima dos painéis -->
+    <div class="search-area">
+      <div class="search-row">
+        <input type="text" id="inp-search" placeholder="Ex: QVV25532585T ou QVV* para listar todos" />
+        <button onclick="handleSubmit()">Buscar</button>
+      </div>
+      <div class="date-filter-row">
+        <div class="date-filter-group">
+          <label for="inp-date-from">Válido de</label>
+          <input type="date" id="inp-date-from" />
+        </div>
+        <div class="date-filter-sep">—</div>
+        <div class="date-filter-group">
+          <label for="inp-date-to">Válido até</label>
+          <input type="date" id="inp-date-to" />
+        </div>
+        <button class="btn-clear-dates" onclick="clearDates()" title="Limpar datas">✕</button>
+      </div>
+      <div class="search-notice" id="searchNotice"></div>
+
+      <div class="wheel-section">
+        <div class="wheel-label"><span class="req">*</span> Selecionar Planta</div>
+        <div class="wheel-row">
+          <button class="wheel-arrow" id="wheel-up" aria-label="Anterior">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                 stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <div class="wheel-track" id="wheelTrack">
+            <div class="wheel-highlight"></div>
+            <div class="wheel-fade-t"></div>
+            <div class="wheel-fade-b"></div>
+            <div class="wheel-list" id="wheelList"></div>
+          </div>
+          <button class="wheel-arrow" id="wheel-down" aria-label="Próximo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                 stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
+        <div class="wheel-caption">Planta selecionada: <strong id="wheelLabel">SBC</strong></div>
+      </div>
+    </div>
+
+    <!-- PAINÉIS — vazios até pesquisar -->
     <div id="panel-qvv"    class="tab-panel active"></div>
     <div id="panel-x"      class="tab-panel"></div>
     <div id="panel-bm"     class="tab-panel"></div>
     <div id="panel-qw"     class="tab-panel"></div>
     <div id="panel-outros" class="tab-panel"></div>
+
   </div>
 
   <footer class="site-footer">© 2026 Mercedes-Benz do Brasil — Todos os direitos reservados</footer>
@@ -131,92 +144,165 @@
 
 <script>
 // =====================================================================
-// DATABASE
-// Nota: QWs são associadas ao QVV, não às variantes X.
+// SUPABASE — conexão com o banco de dados
 // =====================================================================
-const DB = {
-  qvv: {
-    'QVV31330757T': {
-      type: 'QVV', name: 'QVV31330757T', plant: 'SBC',
-      description: 'Veículo de referência',
-      variants: ['X22180062','X002053904','X014452156','QVAM12341245','QVAA12451525'],
-      qws: ['CUQW5232'],
-      validFrom: '2020-01-15', validUntil: '2033-09-23', classification: 'U0'
+const SUPA_URL = 'https://yuhlhsnywzsdwskcfpmb.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl1aGxoc255d3pzZHdza2NmcG1iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4OTkxMzAsImV4cCI6MjA5MDQ3NTEzMH0.NGwso0Ra0XzhsQ7lhpyRPuAND6eJW3A7rErVowN48mw';
+
+async function supaFetch(path) {
+  const res = await fetch(SUPA_URL + '/rest/v1/' + path, {
+    headers: {
+      apikey: SUPA_KEY,
+      Authorization: 'Bearer ' + SUPA_KEY,
+      Prefer: 'count=none'
     }
-  },
-  variants: {
-    'X22180062': {
-      type: 'Variante', name: 'X22180062', description: 'Motor',
-      partNumbers: ['A9608260359','N23125168295489'], qws: [],
-      validFrom: '2020-06-01', validUntil: '2033-09-23', classification: 'U0'
-    },
-    'X002053904': {
-      type: 'Variante', name: 'X002053904', description: 'Câmbio',
-      partNumbers: ['Z5612959'], qws: [],
-      validFrom: '2021-08-10', validUntil: '2033-09-23', classification: 'U0'
-    },
-    'X014452156': {
-      type: 'Variante', name: 'X014452156', description: 'Cabina',
-      partNumbers: ['A9608260359'], qws: [],
-      validFrom: '2020-02-20', validUntil: '2033-09-23', classification: 'U0'
-    },
-    'QVAM12341245': {
-      type: 'Variante', name: 'QVAM12341245', description: 'Motor',
-      partNumbers: ['N23125168295489','A9608260359'], qws: [],
-      validFrom: '2021-11-05', validUntil: '2033-09-23', classification: 'U7'
-    },
-    'QVAA12451525': {
-      type: 'Variante', name: 'QVAA12451525', description: 'Cabina',
-      partNumbers: ['Z5612959'], qws: [],
-      validFrom: '2020-03-12', validUntil: '2033-09-23', classification: 'U7'
-    }
-  },
-  partNumbers: {
-    'A9608260359': {
-      type: 'Part Number', name: 'A9608260359',
-      usedBy: ['X22180062','QVAM12341245','X014452156'],
-      description: 'Componente de motor/cabina',
-      validFrom: '2020-05-01', validUntil: '2033-09-23', classification: 'U7'
-    },
-    'N23125168295489': {
-      type: 'Part Number', name: 'N23125168295489',
-      usedBy: ['X22180062','QVAM12341245'],
-      description: 'Componente de motor',
-      validFrom: '2020-07-15', validUntil: '2033-09-23', classification: 'XU7'
-    },
-    'Z5612959': {
-      type: 'Part Number', name: 'Z5612959',
-      usedBy: ['X002053904','QVAA12451525'],
-      description: 'Componente de câmbio/cabina',
-      validFrom: '2020-01-01', validUntil: '2033-09-23', classification: 'YU7'
-    }
-  },
-  bm: {
-    'C 453.245': {
-      type: 'BM', name: 'C 453.245',
-      usedBy: ['X22180062','X002053904','X014452156'],
-      description: 'Identificador BM',
-      validFrom: '2020-04-10', validUntil: '2033-09-23', classification: 'U7'
-    },
-    'D 523.245': {
-      type: 'BM', name: 'D 523.245',
-      usedBy: ['QVAM12341245','QVAA12451525'],
-      description: 'Identificador BM',
-      validFrom: '2020-09-20', validUntil: '2033-09-23', classification: 'U7'
-    }
-  },
-  qws: {
-    'CUQW5232': {
-      type: 'QW', name: 'CUQW5232',
-      appliedTo: ['QVV31330757T'],   // aplicada no QVV
-      modifications: [
-        { part: 'A9608260359',    sign: '+' },
-        { part: 'N23125168295489', sign: '-' }
-      ],
-      validFrom: '2020-12-01', validUntil: '2033-09-23', classification: 'U7'
-    }
+  });
+  if (!res.ok) throw new Error('Supabase error: ' + res.status);
+  return res.json();
+}
+
+// Busca paginada para tabelas grandes (mais de 1000 linhas)
+async function supaFetchAll(table, pageSize = 1000) {
+  let all = [];
+  let offset = 0;
+  while (true) {
+    const rows = await supaFetch(`${table}?select=*&limit=${pageSize}&offset=${offset}`);
+    all = all.concat(rows);
+    if (rows.length < pageSize) break;
+    offset += pageSize;
   }
-};
+  return all;
+}
+
+async function loadDB() {
+  try {
+    const [
+      qvvRows, varRows, pnRows, bmRows, qwRows,
+      qvvVars, qvvQws, varPNs, bmVars, qwMods,
+      bomItems, qvvBom
+    ] = await Promise.all([
+      supaFetch('qvv?select=*'),
+      supaFetch('variants?select=*'),
+      supaFetch('part_numbers?select=*'),
+      supaFetch('bm?select=*'),
+      supaFetch('qw?select=*'),
+      supaFetch('qvv_variants?select=*'),
+      supaFetch('qvv_qws?select=*'),
+      supaFetch('variant_part_numbers?select=*'),
+      supaFetch('bm_variants?select=*'),
+      supaFetch('qw_modifications?select=*'),
+      supaFetchAll('bom_items'),
+      supaFetchAll('qvv_bom')
+    ]);
+
+    const DB = { qvv: {}, variants: {}, partNumbers: {}, bm: {}, qws: {}, bomItems: {} };
+
+    qvvRows.forEach(r => {
+      DB.qvv[r.id] = {
+        type: 'QVV', name: r.id, plant: r.plant,
+        description: r.description,
+        validFrom: r.valid_from, validUntil: r.valid_until,
+        classification: r.classification,
+        variants: [], qws: [],
+        bomByGroup: {}   // local_field → [ {id, description, qty, acqTyp, classification} ]
+      };
+    });
+
+    varRows.forEach(r => {
+      DB.variants[r.id] = {
+        type: 'Variante', name: r.id,
+        description: r.description,
+        validFrom: r.valid_from, validUntil: r.valid_until,
+        classification: r.classification,
+        partNumbers: [], qws: []
+      };
+    });
+
+    pnRows.forEach(r => {
+      DB.partNumbers[r.id] = {
+        type: 'Part Number', name: r.id,
+        description: r.description,
+        validFrom: r.valid_from, validUntil: r.valid_until,
+        classification: r.classification,
+        usedBy: []
+      };
+    });
+
+    bmRows.forEach(r => {
+      DB.bm[r.id] = {
+        type: 'BM', name: r.id,
+        description: r.description,
+        validFrom: r.valid_from, validUntil: r.valid_until,
+        classification: r.classification,
+        usedBy: []
+      };
+    });
+
+    qwRows.forEach(r => {
+      DB.qws[r.id] = {
+        type: 'QW', name: r.id,
+        validFrom: r.valid_from, validUntil: r.valid_until,
+        classification: r.classification,
+        appliedTo: [], modifications: []
+      };
+    });
+
+    // BoM items (Z numbers)
+    bomItems.forEach(r => {
+      DB.bomItems[r.id] = {
+        type: 'Z', name: r.id,
+        description: r.description,
+        sptc: r.sptc,
+        classification: r.classification,
+        profit_center: r.profit_center
+      };
+    });
+
+    // Relacionamentos existentes
+    qvvVars.forEach(r => DB.qvv[r.qvv_id]?.variants.push(r.variant_id));
+    qvvQws.forEach(r  => {
+      DB.qvv[r.qvv_id]?.qws.push(r.qw_id);
+      DB.qws[r.qw_id]?.appliedTo.push(r.qvv_id);
+    });
+    varPNs.forEach(r  => {
+      DB.variants[r.variant_id]?.partNumbers.push(r.part_number_id);
+      DB.partNumbers[r.part_number_id]?.usedBy.push(r.variant_id);
+    });
+    bmVars.forEach(r  => DB.bm[r.bm_id]?.usedBy.push(r.variant_id));
+    qwMods.forEach(r  => DB.qws[r.qw_id]?.modifications.push({ part: r.part, sign: r.sign }));
+
+    // QVV → BoM items agrupados por local_field (A, C, G, H, I, K, M…)
+    qvvBom.forEach(r => {
+      const qvv = DB.qvv[r.qvv_id];
+      if (!qvv) return;
+      const group = r.local_field || 'Geral';
+      if (!qvv.bomByGroup[group]) qvv.bomByGroup[group] = [];
+      const item = DB.bomItems[r.item_id];
+      qvv.bomByGroup[group].push({
+        id:             r.item_id,
+        description:    item ? item.description : '',
+        quantity:       r.quantity,
+        acqTyp:         r.acq_typ,
+        classification: item ? item.classification : ''
+      });
+    });
+
+    return DB;
+
+  } catch (err) {
+    console.error('Erro ao carregar dados:', err);
+    showLoadError();
+    return null;
+  }
+}
+
+function showLoadError() {
+  const notice = document.getElementById('searchNotice');
+  if (notice) notice.textContent = '⚠ Erro ao conectar com o banco de dados.';
+}
+
+// DB começa vazio — preenchido pelo loadDB()
+let DB = { qvv: {}, variants: {}, partNumbers: {}, bm: {}, qws: {} };
 
 // =====================================================================
 // HISTORY — cada entrada guarda o resultado renderizado completo
@@ -348,6 +434,22 @@ function toast(msg) {
 // =====================================================================
 // TABS
 // =====================================================================
+// Mapa de categoria → id da aba
+const CATEGORY_TAB = {
+  qvv:     'qvv',
+  variant: 'x',      // variantes X ficam na aba X; outras ficam em 'outros'
+  pn:      'outros',
+  bm:      'bm',
+  qw:      'qw'
+};
+
+function categoryToTab(category, result) {
+  if (category === 'variant') {
+    return result.name.startsWith('X') ? 'x' : 'outros';
+  }
+  return CATEGORY_TAB[category] || 'outros';
+}
+
 function switchTab(id) {
   document.querySelectorAll('#tabsBar .tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === id));
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
@@ -360,96 +462,174 @@ function arrowSVG() {
           stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>`;
 }
 
-function makeItemCard(key, name, sub) {
+function makeResultCard(result, category) {
+  // Card de resultado único — clicável para abrir o detalhe
+  const sub = result.description || result.type;
   return `
-    <div class="item-card" onclick="openItem('${key}')">
+    <div class="item-card" onclick="goToDetail('${result.name}')">
       <div>
-        <div class="item-card-name">${name}</div>
+        <div class="item-card-name">${result.name}</div>
         <div class="item-card-sub">${sub}</div>
       </div>
       <div class="item-card-arrow">${arrowSVG()}</div>
     </div>`;
 }
 
-function renderTabs() {
-  // QVV
-  document.getElementById('panel-qvv').innerHTML =
-    '<div class="item-list">' +
-    Object.values(DB.qvv).map(q => makeItemCard(q.name, q.name, q.description)).join('') +
-    '</div>';
+// Popula a aba correta com o resultado da busca e ativa essa aba
+function showResultInTab(result, category) {
+  const tabId  = categoryToTab(category, result);
+  const panel  = document.getElementById('panel-' + tabId);
 
-  // X — only variants starting with X
-  const xItems = Object.values(DB.variants).filter(v => v.name.startsWith('X'));
-  document.getElementById('panel-x').innerHTML = xItems.length
-    ? '<div class="item-list">' + xItems.map(v => makeItemCard(v.name, v.name, v.description)).join('') + '</div>'
-    : '<div class="empty-state">Nenhuma variante X encontrada.</div>';
+  panel.innerHTML =
+    `<div style="font-size:0.6rem;letter-spacing:0.26em;text-transform:uppercase;
+                 color:var(--mb-silver);margin-bottom:10px">Resultado da busca</div>
+     <div class="item-list">${makeResultCard(result, category)}</div>`;
 
-  // BM
-  document.getElementById('panel-bm').innerHTML =
-    '<div class="item-list">' +
-    Object.values(DB.bm).map(b => makeItemCard(b.name, b.name, b.description)).join('') +
-    '</div>';
-
-  // QW
-  document.getElementById('panel-qw').innerHTML =
-    '<div class="item-list">' +
-    Object.values(DB.qws).map(q => makeItemCard(q.name, q.name, 'Modificação')).join('') +
-    '</div>';
-
-  // Outros — non-X variants + all part numbers, grouped
-  const otherVars = Object.values(DB.variants).filter(v => !v.name.startsWith('X'));
-  const allPNs    = Object.values(DB.partNumbers);
-  let html = '';
-  if (otherVars.length) {
-    html += '<div style="font-size:0.62rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--mb-silver);margin-bottom:10px">Variantes</div>';
-    html += '<div class="item-list">' + otherVars.map(v => makeItemCard(v.name, v.name, v.description)).join('') + '</div>';
-    html += '<div class="section-divider"></div>';
-  }
-  if (allPNs.length) {
-    html += '<div style="font-size:0.62rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--mb-silver);margin-bottom:10px">Part Numbers</div>';
-    html += '<div class="item-list">' + allPNs.map(p => makeItemCard(p.name, p.name, p.description)).join('') + '</div>';
-  }
-  document.getElementById('panel-outros').innerHTML = html || '<div class="empty-state">Sem itens.</div>';
+  switchTab(tabId);
 }
 
 // =====================================================================
 // SEARCH
 // =====================================================================
+function clearDates() {
+  document.getElementById('inp-date-from').value = '';
+  document.getElementById('inp-date-to').value   = '';
+}
+
+function getDateFilters() {
+  const from = document.getElementById('inp-date-from').value;  // 'YYYY-MM-DD' or ''
+  const to   = document.getElementById('inp-date-to').value;
+  return { from, to };
+}
+
+function passesDateFilter(result, from, to) {
+  if (!from && !to) return true;
+  // validFrom and validUntil are 'YYYY-MM-DD' strings
+  const vf = result.validFrom || '';
+  const vu = result.validUntil || '';
+  if (from && vu && vu < from) return false;  // item expired before filter start
+  if (to   && vf && vf > to)   return false;  // item started after filter end
+  return true;
+}
+
 function handleSubmit() {
   const raw    = document.getElementById('inp-search').value.trim();
   const notice = document.getElementById('searchNotice');
   if (!raw) { notice.textContent = '⚠ Digite um termo de busca.'; return; }
   notice.textContent = '';
-  openItem(raw.toUpperCase());
+  const query = raw.toUpperCase();
+
+  // Wildcard search: ends with *
+  if (query.endsWith('*')) {
+    handleWildcard(query.slice(0, -1));
+    return;
+  }
+
+  openItem(query);
+}
+
+function handleWildcard(prefix) {
+  const { from, to } = getDateFilters();
+  const sources = [
+    { map: DB.qvv,         cat: 'qvv' },
+    { map: DB.variants,    cat: 'variant' },
+    { map: DB.partNumbers, cat: 'pn' },
+    { map: DB.bm,          cat: 'bm' },
+    { map: DB.qws,         cat: 'qw' }
+  ];
+
+  // Collect all matches grouped by category-tab
+  const byTab = {};
+
+  sources.forEach(({ map, cat }) => {
+    Object.values(map).forEach(item => {
+      if (!item.name.startsWith(prefix)) return;
+      if (!passesDateFilter(item, from, to)) return;
+      const tabId = categoryToTab(cat, item);
+      if (!byTab[tabId]) byTab[tabId] = [];
+      byTab[tabId].push({ item, cat });
+    });
+  });
+
+  const totalFound = Object.values(byTab).reduce((s, arr) => s + arr.length, 0);
+
+  if (totalFound === 0) {
+    toast('Nenhum resultado encontrado para "' + prefix + '*".');
+    return;
+  }
+
+  // Populate each tab that has results
+  let firstTab = null;
+  Object.entries(byTab).forEach(([tabId, entries]) => {
+    const panel = document.getElementById('panel-' + tabId);
+    panel.innerHTML =
+      `<div style="font-size:0.6rem;letter-spacing:0.26em;text-transform:uppercase;
+                   color:var(--mb-silver);margin-bottom:10px">${entries.length} resultado(s) para "${prefix}*"</div>
+       <div class="item-list">
+         ${entries.map(({ item, cat }) => makeResultCard(item, cat)).join('')}
+       </div>`;
+    if (!firstTab) firstTab = tabId;
+  });
+
+  // Clear tabs that didn't match
+  ['qvv','x','bm','qw','outros'].forEach(tabId => {
+    if (!byTab[tabId]) {
+      document.getElementById('panel-' + tabId).innerHTML = '';
+    }
+  });
+
+  switchTab(firstTab);
 }
 
 document.getElementById('inp-search').addEventListener('keydown', e => {
   if (e.key === 'Enter') handleSubmit();
 });
 
-function openItem(key) {
+function findItem(key) {
+  if (DB.qvv[key])         return { result: DB.qvv[key],        category: 'qvv' };
+  if (DB.variants[key])    return { result: DB.variants[key],    category: 'variant' };
+  if (DB.partNumbers[key]) return { result: DB.partNumbers[key], category: 'pn' };
+  if (DB.bm[key])          return { result: DB.bm[key],          category: 'bm' };
+  if (DB.qws[key])         return { result: DB.qws[key],         category: 'qw' };
+  return null;
+}
+
+// Chamado pelos cards das abas — abre o detalhe diretamente
+function goToDetail(key) {
+  const found = findItem(key);
+  if (!found) return;
+  const { result, category } = found;
   const planta = PLANTS[plantIndex];
-  let result = null, category = null;
+  renderDetail(result, category, planta, false);
+}
 
-  if (DB.qvv[key])          { result = DB.qvv[key];          category = 'qvv'; }
-  else if (DB.variants[key]){ result = DB.variants[key];      category = 'variant'; }
-  else if (DB.partNumbers[key]){ result = DB.partNumbers[key]; category = 'pn'; }
-  else if (DB.bm[key])      { result = DB.bm[key];            category = 'bm'; }
-  else if (DB.qws[key])     { result = DB.qws[key];           category = 'qw'; }
+// Chamado pela busca ou por links dentro do detalhe
+function openItem(key) {
+  const { from, to } = getDateFilters();
+  const found = findItem(key);
+  if (!found) { toast('Termo não encontrado na base de dados.'); return; }
 
-  if (!result) { toast('Termo não encontrado na base de dados.'); return; }
+  const { result, category } = found;
+  const planta = PLANTS[plantIndex];
+
+  if (!passesDateFilter(result, from, to)) {
+    toast('Item encontrado mas fora do período de validade selecionado.');
+    return;
+  }
 
   if (category === 'qvv' && planta !== 'SBC') {
     toast('QVV disponível apenas na planta SBC. Selecione SBC.');
     return;
   }
 
-  // if already on detail screen, push current view to history
-  if (document.getElementById('screen-detail').classList.contains('active')) {
-    pushHistory(currentResult, currentCategory, currentPlanta);
-  }
+  const onDetail = document.getElementById('screen-detail').classList.contains('active');
 
-  renderDetail(result, category, planta, true);
+  if (onDetail) {
+    pushHistory(currentResult, currentCategory, currentPlanta);
+    renderDetail(result, category, planta, false);
+  } else {
+    showResultInTab(result, category);
+  }
 }
 
 // =====================================================================
@@ -506,7 +686,7 @@ function renderDetail(result, category, planta, pushToHistory) {
     </div>`;
   body.appendChild(genCard);
 
-  // ---- QVV: variants list + QWs ----
+  // ---- QVV: variants + QWs + BoM items agrupados por local_field ----
   if (category === 'qvv') {
     if (result.variants && result.variants.length) {
       body.appendChild(divider());
@@ -515,6 +695,11 @@ function renderDetail(result, category, planta, pushToHistory) {
     if (result.qws && result.qws.length) {
       body.appendChild(divider());
       body.appendChild(qwCard(result.qws));
+    }
+    // BoM items agrupados por grupo (local_field)
+    if (result.bomByGroup && Object.keys(result.bomByGroup).length) {
+      body.appendChild(divider());
+      body.appendChild(bomGroupsCard(result.bomByGroup));
     }
   }
 
@@ -655,6 +840,61 @@ function qwCard(qwNames) {
   return c;
 }
 
+function bomGroupsCard(bomByGroup) {
+  const c = el('div', 'card');
+  let html = '<div class="card-title">BoM — Itens por Grupo</div>';
+
+  const groups = Object.keys(bomByGroup).sort();
+  groups.forEach(g => {
+    const items = bomByGroup[g];
+    const label = 'Grupo ' + g;
+    html += `
+      <div class="bom-group">
+        <div class="bom-group-header" onclick="toggleBomGroup(this)">
+          <span class="bom-group-label">${label}</span>
+          <span class="bom-group-count">${items.length} itens</span>
+          <svg class="bom-group-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </div>
+        <div class="bom-group-body">
+          <table class="bom-table">
+            <thead>
+              <tr>
+                <th>Material</th>
+                <th>Descrição</th>
+                <th>Qtd</th>
+                <th>Tipo</th>
+                <th>Class.</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${items.map(item => `
+                <tr>
+                  <td class="bom-id">${item.id}</td>
+                  <td class="bom-desc">${item.description || '—'}</td>
+                  <td class="bom-qty">${item.quantity}</td>
+                  <td class="bom-acq">${item.acqTyp || '—'}</td>
+                  <td><span class="badge badge-${(item.classification||'u7').toLowerCase()}">${item.classification || '—'}</span></td>
+                </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+  });
+
+  c.innerHTML = html;
+  return c;
+}
+
+function toggleBomGroup(header) {
+  const body = header.nextElementSibling;
+  const arrow = header.querySelector('.bom-group-arrow');
+  const open = body.classList.toggle('open');
+  arrow.style.transform = open ? 'rotate(180deg)' : '';
+}
+
 function el(tag, cls) {
   const d = document.createElement(tag);
   if (cls) d.className = cls;
@@ -666,9 +906,19 @@ function divider() {
 }
 
 // =====================================================================
-// INIT
+// INIT — carrega dados do Supabase e inicializa
 // =====================================================================
-renderTabs();
+buildWheel();
+
+// Mostra spinner enquanto carrega
+document.getElementById('searchNotice').textContent = 'Carregando dados…';
+
+loadDB().then(data => {
+  if (data) {
+    DB = data;
+    document.getElementById('searchNotice').textContent = '';
+  }
+});
 </script>
 </body>
 </html>
